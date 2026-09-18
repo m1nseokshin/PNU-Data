@@ -2,8 +2,9 @@
 
 부산대학교 데이터 분석 실습 및 과제 저장소입니다.
 
-> 🌐 **[에디토리얼 웹 발표 슬라이드 덱 바로가기 (Live Slide Deck)](https://m1nseokshin.github.io/PNU-Data/)**  
-> 타이타닉 재난 데이터의 구조적 불평등 분석 및 머신러닝 예측 모델 인사이트 프레젠테이션.
+> 🌐 **인터랙티브 웹 발표 슬라이드 덱 (Live Slide Decks)**  
+> - 🩺 **Week 03-02 (당뇨병 데이터 무결성 감사):** [THE HIDDEN ZERO 슬라이드 바로가기](https://m1nseokshin.github.io/PNU-Data/week_03_02/)  
+> - 🚢 **Week 03 (타이타닉 생존 예측 분석):** [THE ANATOMY OF SURVIVAL 슬라이드 바로가기](https://m1nseokshin.github.io/PNU-Data/)
 
 ---
 
