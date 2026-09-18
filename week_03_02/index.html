@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE HIDDEN ZERO: 피마 인디언 당뇨병 데이터 무결성 리포트</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+KR:wght@300;400;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-cream: #F7F5EE;
+      --bg-card: #FFFFFF;
+      --ink-black: #161513;
+      --ink-muted: #5C5852;
+      --ink-light: #8E8980;
+      --accent-crimson: #BA2D1D;
+      --accent-terracotta: #D95338;
+      --accent-olive: #395240;
+      --accent-gold: #C09A58;
+      --line-subtle: rgba(22, 21, 19, 0.12);
+      --line-strong: rgba(22, 21, 19, 0.35);
+      --serif-title: 'Cinzel', 'Cormorant Garamond', 'Noto Serif KR', serif;
+      --serif-body: 'Cormorant Garamond', 'Noto Serif KR', serif;
+      --sans-mono: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-cream);
+      color: var(--ink-black);
+      font-family: var(--serif-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Editorial Paper Noise Texture Overlay */
+    .paper-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 0%, rgba(0,0,0,0.02) 100%);
+      z-index: 100;
+    }
+
+    /* Presentation Header & Status */
+    header.deck-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 18px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line-subtle);
+      background: rgba(247, 245, 238, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+
+    .brand-mark {
+      font-family: var(--serif-title);
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      font-weight: 700;
+      color: var(--ink-black);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark span.issue-tag {
+      background: var(--ink-black);
+      color: var(--bg-cream);
+      padding: 2px 7px;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      font-family: var(--sans-mono);
+      font-weight: 500;
+    }
+
+    .deck-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-family: var(--sans-mono);
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+
+    .deck-controls button {
+      background: transparent;
+      border: 1px solid var(--line-subtle);
+      padding: 6px 14px;
+      font-family: var(--sans-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      color: var(--ink-black);
+      transition: all 0.2s ease;
+    }
+
+    .deck-controls button:hover {
+      background: var(--ink-black);
+      color: var(--bg-cream);
+    }
+
+    /* Top Progress Bar */
+    .progress-track {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(22, 21, 19, 0.08);
+      z-index: 60;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 14.28%;
+      background: var(--accent-crimson);
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Slide Container & Viewport */
+    .deck-viewport {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 40px 60px 40px;
+    }
+
+    .slide {
+      position: absolute;
+      top: 80px;
+      left: 40px;
+      right: 40px;
+      bottom: 60px;
+      background: var(--bg-cream);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s;
+      overflow: hidden;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      z-index: 10;
+    }
+
+    /* Editorial Grid Layouts */
+    .editorial-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 50px;
+      align-items: center;
+      height: 100%;
+      max-width: 1360px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .editorial-grid.three-col {
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 32px;
+    }
+
+    .editorial-grid.asymmetric {
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 60px;
+    }
+
+    /* Editorial Category Eyebrow */
+    .eyebrow {
+      font-family: var(--sans-mono);
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent-crimson);
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 18px;
+      height: 1.5px;
+      background: var(--accent-crimson);
+    }
+
+    /* Headline Styles */
+    h1.display-title {
+      font-family: var(--serif-title);
+      font-size: clamp(38px, 5vw, 68px);
+      line-height: 1.05;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink-black);
+      margin-bottom: 24px;
+    }
+
+    h2.slide-title {
+      font-family: var(--serif-title);
+      font-size: clamp(28px, 3.2vw, 42px);
+      line-height: 1.15;
+      font-weight: 700;
+      color: var(--ink-black);
+      margin-bottom: 18px;
+    }
+
+    p.lead-statement {
+      font-size: clamp(16px, 1.4vw, 20px);
+      line-height: 1.55;
+      color: var(--ink-muted);
+      margin-bottom: 30px;
+      font-weight: 400;
+      border-left: 2px solid var(--accent-gold);
+      padding-left: 18px;
+    }
+
+    /* Editorial Card & Boxes */
+    .editorial-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line-subtle);
+      padding: 28px 30px;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .editorial-card:hover {
+      border-color: var(--line-strong);
+      transform: translateY(-2px);
+    }
+
+    .editorial-card .card-number {
+      font-family: var(--serif-title);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-light);
+      margin-bottom: 12px;
+      letter-spacing: 0.15em;
+    }
+
+    .editorial-card h3 {
+      font-family: var(--serif-title);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--ink-black);
+      line-height: 1.3;
+    }
+
+    .editorial-card p {
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--ink-muted);
+    }
+
+    /* Big Metric Display */
+    .stat-hero {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 24px;
+    }
+
+    .stat-hero .stat-value {
+      font-family: var(--serif-title);
+      font-size: clamp(52px, 6vw, 88px);
+      font-weight: 900;
+      line-height: 0.95;
+      color: var(--accent-crimson);
+      letter-spacing: -0.03em;
+    }
+
+    .stat-hero .stat-label {
+      font-family: var(--sans-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    /* Punchy Noun-Ending Bullet List */
+    .insight-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .insight-list li {
+      font-size: 15.5px;
+      line-height: 1.5;
+      color: var(--ink-black);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--line-subtle);
+    }
+
+    .insight-list li::before {
+      content: '■';
+      font-size: 9px;
+      color: var(--accent-crimson);
+      flex-shrink: 0;
+    }
+
+    .insight-list li strong {
+      font-family: var(--sans-mono);
+      font-weight: 700;
+      color: var(--ink-black);
+      letter-spacing: 0.02em;
+    }
+
+    /* Interactive / Animated Charts */
+    .chart-container {
+      background: var(--bg-card);
+      border: 1px solid var(--line-subtle);
+      padding: 30px;
+      position: relative;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid var(--line-subtle);
+      padding-bottom: 14px;
+      margin-bottom: 24px;
+    }
+
+    .chart-header h4 {
+      font-family: var(--serif-title);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .chart-header span {
+      font-family: var(--sans-mono);
+      font-size: 11px;
+      color: var(--ink-light);
+    }
+
+    /* Bar Chart Custom Animation */
+    .bar-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 70px;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .bar-name {
+      font-family: var(--sans-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-black);
+    }
+
+    .bar-track {
+      height: 22px;
+      background: #EFECE3;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-crimson);
+      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .bar-fill.olive {
+      background: var(--accent-olive);
+    }
+
+    .bar-fill.gold {
+      background: var(--accent-gold);
+    }
+
+    .bar-val {
+      font-family: var(--sans-mono);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: right;
+      color: var(--ink-black);
+    }
+
+    /* Outlier Boxplot Matrix */
+    .boxplot-matrix {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 15px;
+    }
+
+    .boxplot-mini {
+      background: #FAF8F2;
+      border: 1px solid var(--line-subtle);
+      padding: 14px;
+      text-align: center;
+    }
+
+    .boxplot-mini .b-title {
+      font-family: var(--sans-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-black);
+      margin-bottom: 8px;
+    }
+
+    .boxplot-mini .b-count {
+      font-family: var(--serif-title);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--accent-crimson);
+    }
+
+    .boxplot-mini .b-desc {
+      font-size: 11px;
+      color: var(--ink-muted);
+      margin-top: 4px;
+    }
+
+    /* Roadmap Steps */
+    .roadmap-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .roadmap-step {
+      background: var(--bg-card);
+      border: 1px solid var(--line-subtle);
+      padding: 24px;
+      position: relative;
+    }
+
+    .roadmap-step.active-step {
+      border-top: 4px solid var(--accent-crimson);
+    }
+
+    .step-idx {
+      font-family: var(--serif-title);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent-gold);
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+
+    .roadmap-step h4 {
+      font-family: var(--serif-title);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--ink-black);
+    }
+
+    .roadmap-step p {
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--ink-muted);
+    }
+
+    /* Deck Footer & Navigation */
+    footer.deck-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--line-subtle);
+      background: rgba(247, 245, 238, 0.95);
+      font-family: var(--sans-mono);
+      font-size: 11px;
+      color: var(--ink-light);
+      z-index: 50;
+    }
+
+    .footer-left {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .nav-hints kbd {
+      background: #EAE6DB;
+      border: 1px solid var(--line-subtle);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      color: var(--ink-black);
+    }
+
+    .slide-pagination {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-black);
+      letter-spacing: 0.15em;
+    }
+
+    /* Real Image Frame */
+    .editorial-image-frame {
+      border: 1px solid var(--line-subtle);
+      padding: 8px;
+      background: #FFFFFF;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+
+    .editorial-image-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .image-caption {
+      font-family: var(--sans-mono);
+      font-size: 10.5px;
+      color: var(--ink-light);
+      letter-spacing: 0.05em;
+      margin-top: 8px;
+      text-align: right;
+    }
+
+    /* Animation Keyframes */
+    @keyframes pulseNotice {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+
+    .pulse-badge {
+      animation: pulseNotice 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="paper-overlay"></div>
+
+  <!-- Top Progress Bar -->
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="deck-header">
+    <div class="brand-mark">
+      <span>PNU DATA INTELLIGENCE</span>
+      <span class="issue-tag">VOL. 03 · SPECIAL REPORT</span>
+    </div>
+    <div class="deck-controls">
+      <span>AUTOPLAY: <strong id="autoplayStatus" style="cursor:pointer;" onclick="toggleAutoplay()">OFF</strong></span>
+      <button onclick="prevSlide()">PREV (←)</button>
+      <button onclick="nextSlide()">NEXT (→)</button>
+      <button onclick="toggleFullScreen()">FULLSCREEN</button>
+    </div>
+  </header>
+
+  <!-- Slide Viewport -->
+  <main class="deck-viewport">
+
+    <!-- ========================================================
+         SLIDE 1: COVER (에디토리얼 표지)
+         ======================================================== -->
+    <section class="slide active" data-index="0">
+      <div class="editorial-grid asymmetric">
+        <div>
+          <div class="eyebrow">CLINICAL DATA AUDIT REPORT</div>
+          <h1 class="display-title">THE HIDDEN<br><span style="color:var(--accent-crimson); font-style:italic;">ZERO</span></h1>
+          <p class="lead-statement">
+            피마 인디언 당뇨병 데이터셋에 숨겨진 생리학적 모순과 무결성 감사 결과
+          </p>
+          <ul class="insight-list">
+            <li><strong>표면상 결측치:</strong> 판다스 기준 0건의 착시</li>
+            <li><strong>생체 지표 결측치:</strong> 인슐린 48.7%, 피하지방 29.6% 미측정 확인</li>
+            <li><strong>전처리 원칙:</strong> 단순 0값 방치 시 모델 예측 왜곡 불가피</li>
+          </ul>
+        </div>
+        <div style="display:flex; flex-direction:column; justify-content:center; border-left:1px solid var(--line-subtle); padding-left:50px;">
+          <div class="stat-hero">
+            <span class="stat-value">48.7%</span>
+            <span class="stat-label">CRITICAL FEATURE DATA VOID (INSULIN)</span>
+          </div>
+          <div class="editorial-card" style="margin-top:20px;">
+            <div class="card-number">EXECUTIVE THESIS</div>
+            <h3>데이터 진실성의 우위</h3>
+            <p>
+              알고리즘의 정교함보다 선행되어야 할 도메인 기반 데이터 무결성 검증. 측정 불가능 수치의 식별 및 정밀 복원 전략 제시.
+            </p>
+          </div>
+          <div style="margin-top:24px; font-family:var(--sans-mono); font-size:12px; color:var(--ink-light); letter-spacing:0.1em;">
+            ANALYST: MINSEOK SHIN · PUSAN NATIONAL UNIV.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 2: EXECUTIVE SUMMARY (핵심 요약)
+         ======================================================== -->
+    <section class="slide" data-index="1">
+      <div style="max-width:1360px; width:100%; margin:0 auto;">
+        <div class="eyebrow">01 / EXECUTIVE AUDIT SUMMARY</div>
+        <h2 class="slide-title">데이터 무결성 3대 핵심 지표 검증 결과</h2>
+        <p class="lead-statement">
+          표면적 완전성 이면에 존재하는 심각한 생체 정보 공백 및 정상 범위 이탈 패턴
+        </p>
+        
+        <div class="editorial-grid three-col" style="height:auto; margin-top:30px;">
+          <div class="editorial-card">
+            <div class="card-number">AUDIT 01 · DUPLICATES</div>
+            <h3 style="color:var(--accent-olive);">중복 데이터 0건</h3>
+            <div style="font-family:var(--serif-title); font-size:42px; font-weight:700; color:var(--accent-olive); margin:12px 0;">0.00%</div>
+            <p>
+              전체 768건 전수 조사 결과 동일 피험자 중복 수집 부재. 행 단위 무결성 확보 완료.
+            </p>
+          </div>
+
+          <div class="editorial-card" style="border-top:3px solid var(--accent-crimson);">
+            <div class="card-number">AUDIT 02 · MISSING DATA</div>
+            <h3 style="color:var(--accent-crimson);">숨은 결측치(0값) 실재</h3>
+            <div style="font-family:var(--serif-title); font-size:42px; font-weight:700; color:var(--accent-crimson); margin:12px 0;">374건</div>
+            <p>
+              생체 지표 5종에서 0으로 표기된 결측치 대량 포착. 인슐린의 48.7%가 측정 결측 상태.
+            </p>
+          </div>
+
+          <div class="editorial-card" style="border-top:3px solid var(--accent-gold);">
+            <div class="card-number">AUDIT 03 · OUTLIERS</div>
+            <h3 style="color:var(--accent-gold);">IQR 극단치 혼재</h3>
+            <div style="font-family:var(--serif-title); font-size:42px; font-weight:700; color:var(--ink-black); margin:12px 0;">146건</div>
+            <p>
+              단순 제거 대상인 하단 결측치와 고위험군 임상 신호인 상단 이상치의 복합 공존.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 3: THE CRITICAL FLAW (숨겨진 결측치 애니메이션)
+         ======================================================== -->
+    <section class="slide" data-index="2">
+      <div class="editorial-grid asymmetric">
+        <div>
+          <div class="eyebrow">02 / BIOLOGICAL PARADOX</div>
+          <h2 class="slide-title">생리학적 불가능 수치:<br>0값에 감춰진 결측</h2>
+          <p class="lead-statement">
+            혈압과 인슐린이 0인 환자는 생존 불가. 의학적 상식에 근거한 결측 재정의 필수.
+          </p>
+
+          <div class="editorial-card" style="background:#FAF8F2;">
+            <div class="card-number">DOMAIN PERSPECTIVE</div>
+            <h3 style="font-size:18px;">단순 NaN 판별(df.isnull())의 한계</h3>
+            <ul class="insight-list" style="margin-top:10px;">
+              <li><strong>포도당(Glucose):</strong> 5건(0.7%) 저혈당 쇼크 불능 수치</li>
+              <li><strong>혈압(BloodPressure):</strong> 35건(4.6%) 수축기 혈압 0 측정 오류</li>
+              <li><strong>피하지방(SkinThickness):</strong> 227건(29.6%) 미측정 공백</li>
+              <li><strong>혈청 인슐린(Insulin):</strong> 374건(48.7%) 대규모 데이터 누락</li>
+            </ul>
+          </div>
+        </div>
+
+        <div>
+          <div class="chart-container">
+            <div class="chart-header">
+              <h4>FEATURE-WISE ZERO PERCENTAGE (%)</h4>
+              <span>N = 768 ROWS</span>
+            </div>
+
+            <!-- Animated Custom Bar Chart -->
+            <div class="bar-row">
+              <span class="bar-name">Insulin (인슐린)</span>
+              <div class="bar-track"><div class="bar-fill" data-width="48.7"></div></div>
+              <span class="bar-val" style="color:var(--accent-crimson);">48.7%</span>
+            </div>
+
+            <div class="bar-row">
+              <span class="bar-name">SkinThickness (피하)</span>
+              <div class="bar-track"><div class="bar-fill" data-width="29.6"></div></div>
+              <span class="bar-val" style="color:var(--accent-terracotta);">29.6%</span>
+            </div>
+
+            <div class="bar-row">
+              <span class="bar-name">BloodPressure (혈압)</span>
+              <div class="bar-track"><div class="bar-fill gold" data-width="4.6"></div></div>
+              <span class="bar-val">4.6%</span>
+            </div>
+
+            <div class="bar-row">
+              <span class="bar-name">BMI (체질량지수)</span>
+              <div class="bar-track"><div class="bar-fill gold" data-width="1.4"></div></div>
+              <span class="bar-val">1.4%</span>
+            </div>
+
+            <div class="bar-row">
+              <span class="bar-name">Glucose (포도당)</span>
+              <div class="bar-track"><div class="bar-fill olive" data-width="0.7"></div></div>
+              <span class="bar-val">0.7%</span>
+            </div>
+
+            <div style="margin-top:24px; padding-top:16px; border-top:1px dashed var(--line-subtle); display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-family:var(--sans-mono); font-size:11px; color:var(--ink-light);">AUDIT CONCLUSION</span>
+              <span style="font-family:var(--sans-mono); font-size:12px; font-weight:700; color:var(--accent-crimson);">전체 표본의 약 50%가 부분 결측 상태</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 4: OUTLIER AUDIT (이상치 분석)
+         ======================================================== -->
+    <section class="slide" data-index="3">
+      <div class="editorial-grid asymmetric">
+        <div>
+          <div class="eyebrow">03 / OUTLIER DIAGNOSTICS</div>
+          <h2 class="slide-title">IQR 이상치 검증:<br>노이즈와 핵심 신호의 분리</h2>
+          <p class="lead-statement">
+            사분위수 범위($Q_3 + 1.5 \times IQR$)를 초과한 극단값의 양면적 임상 의미
+          </p>
+
+          <div class="boxplot-matrix">
+            <div class="boxplot-mini">
+              <div class="b-title">INSULIN</div>
+              <div class="b-count">34</div>
+              <div class="b-desc">상단 극단 수치</div>
+            </div>
+            <div class="boxplot-mini">
+              <div class="b-title">PRESSURE</div>
+              <div class="b-count">45</div>
+              <div class="b-desc">하단 0값 다수</div>
+            </div>
+            <div class="boxplot-mini">
+              <div class="b-title">BMI</div>
+              <div class="b-count">19</div>
+              <div class="b-desc">초고도 비만군</div>
+            </div>
+            <div class="boxplot-mini">
+              <div class="b-title">AGE</div>
+              <div class="b-count">9</div>
+              <div class="b-desc">65세 이상 고령</div>
+            </div>
+          </div>
+
+          <ul class="insight-list" style="margin-top:24px;">
+            <li><strong>하단 이상치:</strong> 0값 결측치와 동일. 즉각적 전처리 대상.</li>
+            <li><strong>상단 이상치:</strong> 중증 당뇨병 환자의 실제 병리 신호. 일괄 제거 시 판별력 저하 초래.</li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="editorial-image-frame">
+            <img src="./02_outliers_boxplot.png" alt="IQR Boxplot Analysis" onerror="this.src='week_03_02/02_outliers_boxplot.png'">
+            <div class="image-caption">FIG 01. 8개 생체 지표별 IQR 박스플롯 분포 및 이상치 식별도</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 5: RISK OF NEGLIGENCE (미정제 시 위험성)
+         ======================================================== -->
+    <section class="slide" data-index="4">
+      <div style="max-width:1360px; width:100%; margin:0 auto;">
+        <div class="eyebrow">04 / RISK OF CONTAMINATION</div>
+        <h2 class="slide-title">미정제 데이터 학습 시 발생하는 치명적 결함</h2>
+        <p class="lead-statement">
+          데이터 클렌징 부재가 야기하는 인공지능 모델의 3대 신뢰성 위기
+        </p>
+
+        <div class="editorial-grid three-col" style="height:auto; margin-top:30px;">
+          <div class="editorial-card" style="border-left:4px solid var(--accent-crimson);">
+            <div class="card-number">RISK FACTOR 01</div>
+            <h3>저혈당 환자 오인 편향</h3>
+            <p>
+              인슐린 0을 실제 최저치로 인식하여 중증 환자를 정상군으로 오판정하는 알고리즘 편향 발생.
+            </p>
+          </div>
+
+          <div class="editorial-card" style="border-left:4px solid var(--accent-terracotta);">
+            <div class="card-number">RISK FACTOR 02</div>
+            <h3>핵심 피처 영향력 상실</h3>
+            <p>
+              당뇨 진단의 핵심인 인슐린 분비능 지표가 노이즈로 전락하여 모델 내 중요도 급락.
+            </p>
+          </div>
+
+          <div class="editorial-card" style="border-left:4px solid var(--accent-olive);">
+            <div class="card-number">RISK FACTOR 03</div>
+            <h3>임상 의사결정 신뢰 붕괴</h3>
+            <p>
+              학습 데이터의 오염으로 인한 일반화 실패 및 현장 의료 인공지능 신뢰도 전면 실추.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 6: STRATEGIC ROADMAP (전처리 로드맵)
+         ======================================================== -->
+    <section class="slide" data-index="5">
+      <div style="max-width:1360px; width:100%; margin:0 auto;">
+        <div class="eyebrow">05 / ACTIONABLE PROTOCOL</div>
+        <h2 class="slide-title">데이터 무결성 복원을 위한 4단계 전처리 로드맵</h2>
+        <p class="lead-statement">
+          결측 식별부터 모델 적합형 정규화까지의 엔지니어링 실행 계획
+        </p>
+
+        <div class="roadmap-container">
+          <div class="roadmap-step active-step">
+            <div class="step-idx">01</div>
+            <h4>결측 재정의</h4>
+            <p>
+              0값으로 왜곡된 5대 생체 지표를 판다스 표준 <code>np.nan</code>으로 공식 치환.
+            </p>
+          </div>
+
+          <div class="roadmap-step active-step">
+            <div class="step-idx">02</div>
+            <h4>조건부 정밀 대체</h4>
+            <p>
+              당뇨 여부(Outcome) 및 연령대 그룹별 중앙값(Median) 또는 KNN 기반 다변량 보정.
+            </p>
+          </div>
+
+          <div class="roadmap-step active-step">
+            <div class="step-idx">03</div>
+            <h4>로버스트 스케일링</h4>
+            <p>
+              상단 고위험 극단치의 정보를 보존하면서 이상치 영향을 억제하는 RobustScaler 적용.
+            </p>
+          </div>
+
+          <div class="roadmap-step active-step">
+            <div class="step-idx">04</div>
+            <h4>모니터링 체계화</h4>
+            <p>
+              학습 파이프라인 진입 전 무결성 자동 검증(Data Validation Gate) 상시 가동.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 7: PERSPECTIVE & CONCLUSION (결론 및 제언)
+         ======================================================== -->
+    <section class="slide" data-index="6">
+      <div class="editorial-grid asymmetric">
+        <div>
+          <div class="eyebrow">06 / PERSPECTIVE</div>
+          <h2 class="slide-title">진실한 데이터만이<br>올바른 인텔리전스를 형성</h2>
+          <p class="lead-statement">
+            복잡한 딥러닝 기법보다 선행되어야 할 기본적 데이터 무결성 검증의 엄정함
+          </p>
+
+          <div class="stat-hero" style="margin-top:30px;">
+            <span class="stat-value" style="color:var(--accent-olive);">TRUST</span>
+            <span class="stat-label">FIRST PRINCIPLE OF MEDICAL AI</span>
+          </div>
+        </div>
+
+        <div style="border-left:1px solid var(--line-subtle); padding-left:50px; display:flex; flex-direction:column; justify-content:center;">
+          <div class="editorial-card" style="background:#FFFFFF; margin-bottom:20px;">
+            <div class="card-number">FINAL VERDICT</div>
+            <h3>3대 핵심 원칙 요약</h3>
+            <ul class="insight-list">
+              <li><strong>도메인 기반 감사:</strong> 단순 통계 지표(isnull) 맹신 탈피</li>
+              <li><strong>선별적 이상치 수용:</strong> 생체 고유 신호의 무분별한 소거 지양</li>
+              <li><strong>투명한 파이프라인:</strong> 전처리 근거의 설명 가능성 확보</li>
+            </ul>
+          </div>
+
+          <div style="font-family:var(--sans-mono); font-size:12px; line-height:1.8; color:var(--ink-muted);">
+            PNU DATA SCIENCE COURSEWORK · WEEK 03-02<br>
+            REPOSITORY: <a href="https://github.com/m1nseokshin/PNU-Data" target="_blank" style="color:var(--ink-black); font-weight:700; text-decoration:none; border-bottom:1px solid var(--ink-black);">m1nseokshin/PNU-Data</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer Navigation & Indicator -->
+  <footer class="deck-footer">
+    <div class="footer-left">
+      <span class="slide-pagination" id="slidePagination">PAGE 01 OF 07</span>
+      <span class="nav-hints">NAVIGATE WITH <kbd>→</kbd> <kbd>←</kbd> OR <kbd>SPACE</kbd></span>
+    </div>
+    <div>
+      <span>PIMA INDIANS DIABETES · EDITORIAL DECK</span>
+    </div>
+  </footer>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const pagination = document.getElementById('slidePagination');
+    const progressFill = document.getElementById('progressFill');
+    let autoplayInterval = null;
+
+    function updateSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= totalSlides) index = totalSlides - 1;
+
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle('active', idx === index);
+      });
+
+      currentSlide = index;
+
+      // Update Pagination & Progress
+      pagination.textContent = `PAGE ${String(currentSlide + 1).padStart(2, '0')} OF ${String(totalSlides).padStart(2, '0')}`;
+      progressFill.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+
+      // Trigger Bar Animation if on Slide 3 (Index 2)
+      if (currentSlide === 2) {
+        animateBars();
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        updateSlide(currentSlide + 1);
+      } else {
+        updateSlide(0); // Loop to start
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        updateSlide(currentSlide - 1);
+      }
+    }
+
+    function animateBars() {
+      const bars = document.querySelectorAll('.bar-fill');
+      bars.forEach(bar => {
+        bar.style.width = '0%';
+        setTimeout(() => {
+          bar.style.width = bar.getAttribute('data-width') + '%';
+        }, 150);
+      });
+    }
+
+    function toggleAutoplay() {
+      const status = document.getElementById('autoplayStatus');
+      if (autoplayInterval) {
+        clearInterval(autoplayInterval);
+        autoplayInterval = null;
+        status.textContent = 'OFF';
+      } else {
+        autoplayInterval = setInterval(nextSlide, 4500);
+        status.textContent = 'ON';
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard Event Listener
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullScreen();
+      }
+    });
+
+    // Initial Trigger
+    updateSlide(0);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THE ANATOMY OF SURVIVAL | 타이타닉 데이터 분석 에디토리얼 슬라이드</title>
+  
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Noto+Serif+KR:wght@300;400;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #F9F8F5;
+      --bg-card: #FFFFFF;
+      --bg-tint: #F2EFEA;
+      --bg-dark: #141413;
+      --text-main: #141413;
+      --text-muted: #5C5A54;
+      --text-sub: #8C8880;
+      --accent-terracotta: #BA4836;
+      --accent-indigo: #233544;
+      --accent-olive: #39503B;
+      --border-color: rgba(20, 20, 19, 0.12);
+      --border-dark: rgba(20, 20, 19, 0.4);
+      --serif-title: 'Cinzel', 'Cormorant Garamond', 'Noto Serif KR', serif;
+      --serif-body: 'Cormorant Garamond', 'Noto Serif KR', serif;
+      --sans-ui: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: 'Space Mono', monospace;
+      --transition: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--sans-ui);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .deck-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Slide Element */
+    .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      padding: 3rem 5.5rem 5.5rem 5.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(24px) scale(0.99);
+      transition: opacity 0.65s var(--transition), transform 0.65s var(--transition), visibility 0.65s;
+      background: var(--bg-primary);
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      z-index: 2;
+    }
+
+    /* Architectural Grid Line */
+    .slide::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(var(--border-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+      background-size: 88px 88px;
+      opacity: 0.28;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Top Metadata Bar */
+    .slide-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-sub);
+    }
+
+    .slide-meta .issue-tag {
+      color: var(--accent-terracotta);
+      font-weight: 700;
+    }
+
+    .meta-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .meta-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.2s;
+    }
+
+    .meta-btn:hover { color: var(--accent-terracotta); }
+
+    /* Content Area */
+    .slide-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 1.2rem 0;
+    }
+
+    /* Typography */
+    .hero-kicker {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--accent-terracotta);
+      margin-bottom: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .hero-kicker::before {
+      content: "";
+      display: inline-block;
+      width: 22px;
+      height: 1px;
+      background-color: var(--accent-terracotta);
+    }
+
+    .slide-title {
+      font-family: var(--serif-title);
+      font-size: 2.9rem;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .slide-subtitle {
+      font-family: var(--serif-body);
+      font-size: 1.22rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 1.8rem;
+    }
+
+    /* Grid Layouts */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3.2rem;
+      align-items: center;
+      height: 100%;
+    }
+
+    .grid-3col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      height: 100%;
+      align-items: stretch;
+    }
+
+    /* Editorial Cards */
+    .editorial-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 2.2rem;
+      position: relative;
+      transition: transform 0.4s var(--transition), box-shadow 0.4s var(--transition);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .editorial-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 32px rgba(20, 20, 19, 0.05);
+      border-color: var(--border-dark);
+    }
+
+    .card-num {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent-terracotta);
+      letter-spacing: 0.15em;
+      margin-bottom: 1.1rem;
+    }
+
+    .card-title {
+      font-family: var(--serif-body);
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .card-desc {
+      font-size: 0.94rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    .card-stat {
+      margin-top: 1.4rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+    }
+
+    .stat-val {
+      font-family: var(--serif-title);
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Chart Box */
+    .chart-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 1.8rem;
+      position: relative;
+      height: 380px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 1rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .chart-box-title {
+      font-family: var(--serif-body);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .chart-box-meta {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--text-sub);
+    }
+
+    .chart-canvas-wrap {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Callouts & Lists */
+    .insight-callout {
+      border-left: 2px solid var(--accent-terracotta);
+      padding-left: 1.4rem;
+      margin: 1.2rem 0;
+    }
+
+    .insight-callout p {
+      font-size: 1.08rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .insight-callout span {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent-terracotta);
+      margin-top: 0.4rem;
+      letter-spacing: 0.1em;
+    }
+
+    .editorial-list {
+      list-style: none;
+      margin-top: 0.8rem;
+    }
+
+    .editorial-list li {
+      position: relative;
+      padding-left: 1.3rem;
+      margin-bottom: 0.8rem;
+      font-size: 0.93rem;
+      line-height: 1.65;
+      color: var(--text-muted);
+    }
+
+    .editorial-list li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: var(--accent-terracotta);
+      font-family: var(--mono);
+    }
+
+    .editorial-list li strong {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Cover Styling */
+    .cover-content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      max-width: 950px;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      padding: 0.45rem 1rem;
+      background: var(--text-main);
+      color: var(--bg-primary);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 2.2rem;
+    }
+
+    .cover-title {
+      font-family: var(--serif-title);
+      font-size: 4.8rem;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.8rem;
+    }
+
+    .cover-title span.italic {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent-terracotta);
+    }
+
+    .cover-abstract {
+      font-family: var(--serif-body);
+      font-size: 1.4rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+      margin-bottom: 2.8rem;
+      max-width: 820px;
+    }
+
+    .cover-footer-meta {
+      display: flex;
+      gap: 3.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-dark);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-sub);
+    }
+
+    .cover-footer-meta strong {
+      color: var(--text-main);
+    }
+
+    /* Simulation Component */
+    .sim-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 1rem;
+    }
+
+    .sim-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 2rem;
+    }
+
+    .sim-card.survived { border-top: 4px solid var(--accent-olive); }
+    .sim-card.perished { border-top: 4px solid var(--accent-terracotta); }
+
+    .sim-tag {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.6rem;
+    }
+
+    .sim-tag.survived { color: var(--accent-olive); }
+    .sim-tag.perished { color: var(--accent-terracotta); }
+
+    .sim-rate {
+      font-family: var(--serif-title);
+      font-size: 3.4rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.8rem;
+    }
+
+    /* Bottom Deck Footer */
+    .deck-footer {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%;
+      padding: 1.1rem 5.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-color);
+      z-index: 10;
+    }
+
+    .progress-bar-wrap {
+      position: absolute;
+      top: -2px; left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(20, 20, 19, 0.08);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 11.11%;
+      background: var(--accent-terracotta);
+      transition: width 0.4s var(--transition);
+    }
+
+    .deck-controls {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.45rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.25s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--text-main);
+      color: var(--bg-primary);
+      border-color: var(--text-main);
+    }
+
+    .slide-counter {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      letter-spacing: 0.12em;
+    }
+
+    .slide-counter span.curr {
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .deck-shortcuts {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--text-sub);
+      letter-spacing: 0.08em;
+    }
+
+    .shortcut-key {
+      display: inline-block;
+      padding: 0.15rem 0.4rem;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    /* Modal for Python Static Charts */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(20, 20, 19, 0.75);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      width: 90vw;
+      max-width: 1100px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2.5rem;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1.5rem; right: 1.8rem;
+      background: none;
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.8rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .modal-close:hover { background: var(--text-main); color: #fff; }
+
+    .modal-title {
+      font-family: var(--serif-title);
+      font-size: 1.8rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .modal-subtitle {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      margin-bottom: 1.8rem;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .gallery-item img {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      display: block;
+    }
+
+    .gallery-item p {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      margin-top: 0.5rem;
+    }
+
+    /* Table of Contents Drawer */
+    .toc-drawer {
+      position: fixed;
+      top: 0; right: -400px;
+      width: 360px;
+      height: 100vh;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border-color);
+      z-index: 90;
+      padding: 3rem 2rem;
+      transition: right 0.4s var(--transition);
+      box-shadow: -8px 0 32px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .toc-drawer.active { right: 0; }
+
+    .toc-title {
+      font-family: var(--serif-title);
+      font-size: 1.4rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .toc-list {
+      list-style: none;
+    }
+
+    .toc-item {
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(20,20,19,0.05);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .toc-item:hover, .toc-item.current {
+      color: var(--accent-terracotta);
+      font-weight: 700;
+    }
+
+    .toc-item .num {
+      color: var(--text-sub);
+      font-size: 0.7rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .slide { padding: 2rem 2.5rem 5rem 2.5rem; }
+      .cover-title { font-size: 3.2rem; }
+      .slide-title { font-size: 2.2rem; }
+      .grid-2col { grid-template-columns: 1fr; gap: 1.5rem; }
+      .grid-3col { grid-template-columns: 1fr; gap: 1.2rem; }
+      .deck-footer { padding: 1rem 2.5rem; }
+      .deck-shortcuts { display: none; }
+      .chart-box { height: 280px; }
+      .cover-footer-meta { flex-direction: column; gap: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="deck-container" id="deck">
+
+  <!-- ====================================================
+       SLIDE 1: COVER
+  ==================================================== -->
+  <section class="slide active" data-slide="1">
+    <div class="slide-meta">
+      <span>PNU DATA SCIENCE MONOGRAPH — ISSUE NO. 03</span>
+      <span class="issue-tag">EDITORIAL SLIDE DECK</span>
+      <div class="meta-actions">
+        <button class="meta-btn" id="openTocBtn">INDEX</button>
+        <button class="meta-btn" id="openGalleryBtn">RAW FIGURES</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="cover-content">
+        <div class="cover-badge">Research Monograph & Predictive Analysis</div>
+        <h1 class="cover-title">
+          THE ANATOMY<br>
+          OF <span class="italic">SURVIVAL</span>
+        </h1>
+        <p class="cover-abstract">
+          1912년 4월 타이타닉 재난의 통계적 해체.<br>
+          단순한 운이 아닌 <strong>성별, 계층, 그리고 사회적 구조</strong>가 가른 삶과 죽음의 경계.
+        </p>
+        <div class="cover-footer-meta">
+          <div>RESEARCHER <strong>MINSEOK SHIN</strong></div>
+          <div>DATASET <strong>TITANIC COMPACT (891 OBS)</strong></div>
+          <div>MODEL <strong>RANDOM FOREST ENSEMBLE</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+  <!-- ====================================================
+       SLIDE 2: EXECUTIVE SUMMARY
+  ==================================================== -->
+  <section class="slide" data-slide="2">
+    <div class="slide-meta">
+      <span>01 / EXECUTIVE SUMMARY</span>
+      <span>STRUCTURAL HYPOTHESIS</span>
+      <div class="meta-actions">
+        <button class="meta-btn" onclick="openToc()">INDEX</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="hero-kicker">Core Findings</div>
+      <h2 class="slide-title">핵심 발견: 재난의 계층적 구조화</h2>
+      <p class="slide-subtitle">데이터가 증명한 세 가지 결정적 생존 메커니즘 요약.</p>
+
+      <div class="grid-3col">
+        <div class="editorial-card">
+          <div>
+            <div class="card-num">INSIGHT 01</div>
+            <h3 class="card-title">성별의 극단적 비대칭성</h3>
+            <p class="card-desc">
+              "여성과 아이 먼저"라는 에드워디언 규범의 강력한 발현.<br>
+              남성 대비 여성 승객의 생존율이 약 4배 높은 압도적 통계치 확인.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-val" data-counter="3.93" data-suffix="x">3.93x</span>
+            <span class="stat-label">여성 생존 승산비 (Odds Ratio)</span>
+          </div>
+        </div>
+
+        <div class="editorial-card">
+          <div>
+            <div class="card-num">INSIGHT 02</div>
+            <h3 class="card-title">객실 등급과 물리적 격차</h3>
+            <p class="card-desc">
+              티켓 가격과 상부 갑판 접근성의 상관성.<br>
+              1등석 63.0% 대비 3등석 24.2%로, 지위와 공간 배치가 가른 탈출 기회의 불균형.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-val" data-counter="63.0" data-suffix="%">63.0%</span>
+            <span class="stat-label">1등석 탑승객 생존율</span>
+          </div>
+        </div>
+
+        <div class="editorial-card">
+          <div>
+            <div class="card-num">INSIGHT 03</div>
+            <h3 class="card-title">공동체 규모의 역설</h3>
+            <p class="card-desc">
+              단독 탑승자(30.4%)보다 2~4인 소가족(55~70%)의 생존율 극대화.<br>
+              5인 이상 대가족의 대피 통제 한계 및 급격한 생존율 하락.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-val" data-counter="72.4" data-suffix="%">72.4%</span>
+            <span class="stat-label">4인 가족 생존율 (최고점)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+  <!-- ====================================================
+       SLIDE 3: DATA INTEGRITY & AUDIT
+  ==================================================== -->
+  <section class="slide" data-slide="3">
+    <div class="slide-meta">
+      <span>02 / DATA INTEGRITY</span>
+      <span>CLEANING & IMPUTATION</span>
+      <div class="meta-actions">
+        <button class="meta-btn" onclick="openGallery()">VIEW FIG 1</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="grid-2col">
+        <div>
+          <div class="hero-kicker">Data Integrity Audit</div>
+          <h2 class="slide-title">데이터 무결성 검증</h2>
+          <p class="slide-subtitle">모델 신뢰성 확보를 위한 3단계 정제 철학.</p>
+
+          <div class="insight-callout">
+            <p>완전 무결한 중복값 0건 및 결측치 패턴의 체계적 보정 완료.</p>
+            <span>DATA INTEGRITY VERIFIED (100% UNIQUE ROWS)</span>
+          </div>
+
+          <ul class="editorial-list">
+            <li><strong>Cabin (객실 번호) 77.1% 결측:</strong> 결측치 자체가 정보성(하위 객실일수록 무기록)을 가지므로 단순 삭제 배제 및 특성 단순화.</li>
+            <li><strong>Age (나이) 19.9% 결측:</strong> 단순 전체 평균 대체 대신 호칭(Master 3.5세, Miss 21세, Mr 30세)별 중앙값 정밀 대체.</li>
+            <li><strong>Fare (운임 요금) 극단 이상치:</strong> 최대 $512 등 우측 꼬리가 긴 왜도에 로그 변환(np.log1p) 적용.</li>
+          </ul>
+        </div>
+
+        <div class="chart-box">
+          <div class="chart-box-header">
+            <span class="chart-box-title">컬럼별 결측치 비율 및 중복 현황</span>
+            <span class="chart-box-meta">TOTAL 891 ROWS</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="chartIntegrity"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+  <!-- ====================================================
+       SLIDE 4: THE PRIMACY OF GENDER
+  ==================================================== -->
+  <section class="slide" data-slide="4">
+    <div class="slide-meta">
+      <span>03 / SOCIAL MORALITY</span>
+      <span>GENDER DIVIDE</span>
+      <div class="meta-actions">
+        <button class="meta-btn" onclick="openGallery()">VIEW FIG 2</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="grid-2col">
+        <div class="chart-box">
+          <div class="chart-box-header">
+            <span class="chart-box-title">성별에 따른 생존 및 사망 인원 비교</span>
+            <span class="chart-box-meta">N = 891</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="chartGender"></canvas>
+          </div>
+        </div>
+
+        <div>
+          <div class="hero-kicker">Behavioral Doctrine</div>
+          <h2 class="slide-title">성별: 삶을 가른 절대 규범</h2>
+          <p class="slide-subtitle">해상 재난 행동 강령이 빚어낸 극명한 통계적 결과.</p>
+
+          <div class="insight-callout">
+            <p>여성 생존율 74.2% vs 남성 생존율 18.9%</p>
+            <span>STATISTICAL GAP: 55.3%P</span>
+          </div>
+
+          <p class="card-desc" style="margin-bottom: 1.2rem;">
+            구명정 탑승 우선순위에서 남성은 철저히 배제됨.<br>
+            전체 남성 577명 중 468명 사망으로 인한 강력한 변수 영향력 확인.
+          </p>
+
+          <div class="editorial-card" style="padding: 1.2rem 1.6rem;">
+            <div class="card-num" style="margin-bottom: 0.4rem;">HISTORICAL IMPLICATION</div>
+            <div style="font-size: 0.95rem; color: var(--text-main); font-weight: 600;">
+              신사도(Chivalry)와 인명 구조 원칙의 물리적 실현 증거.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+  <!-- ====================================================
+       SLIDE 5: CLASS STRATIFICATION
+  ==================================================== -->
+  <section class="slide" data-slide="5">
+    <div class="slide-meta">
+      <span>04 / SOCIOECONOMIC STATUS</span>
+      <span>PCLASS × GENDER MATRIX</span>
+      <div class="meta-actions">
+        <button class="meta-btn" onclick="openGallery()">VIEW FIG 2</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="hero-kicker">Socioeconomic Gradient</div>
+      <h2 class="slide-title">사회경제적 계층화와 생존율</h2>
+      <p class="slide-subtitle">객실 등급과 성별이 교차할 때 드러나는 극한의 불평등.</p>
+
+      <div class="grid-2col">
+        <div>
+          <div class="chart-box" style="height: 350px;">
+            <div class="chart-box-header">
+              <span class="chart-box-title">객실 등급 × 성별 교차 생존율</span>
+              <span class="chart-box-meta">INTERACTIVE MATRIX</span>
+            </div>
+            <div class="chart-canvas-wrap">
+              <canvas id="chartClassMatrix"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; justify-content: center;">
+          <div class="insight-callout">
+            <p>1등석 여성 96.8% vs 3등석 남성 13.5%</p>
+            <span>SURVIVAL RATIO SPREAD: 7.17x</span>
+          </div>
+
+          <ul class="editorial-list">
+            <li><strong>공간적 구조:</strong> 1등석 선실과 상부 보트 갑판 간 최단 이동 동선의 특권.</li>
+            <li><strong>정보의 격차:</strong> 침몰 초기 1등석 승객에게 우선 전달된 대피 경보 및 구명조끼 보급.</li>
+            <li><strong>3등석 여성의 비극:</strong> 여성임에도 50.0% 생존에 그쳐 계층적 불리함의 상쇄 효과 확인.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+  <!-- ====================================================
+       SLIDE 6: THE SOCIAL UNIT & AGE
+  ==================================================== -->
+  <section class="slide" data-slide="6">
+    <div class="slide-meta">
+      <span>05 / DEMOGRAPHIC DYNAMICS</span>
+      <span>AGE & FAMILY STRUCTURE</span>
+      <div class="meta-actions">
+        <button class="meta-btn" onclick="openGallery()">VIEW FIG 2</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="grid-2col">
+        <div>
+          <div class="hero-kicker">Family Dynamics</div>
+          <h2 class="slide-title">가족 규모와 공동체의 힘</h2>
+          <p class="slide-subtitle">동승 인원수와 생존 가능성의 역 U자형 관계 곡선.</p>
+
+          <div class="insight-callout">
+            <p>단독 탑승자(30.4%) &lt; 대가족(15~33%) &lt; 소가족(55~72%)</p>
+            <span>OPTIMAL SURVIVAL UNIT: 3~4 MEMBERS</span>
+          </div>
+
+          <ul class="editorial-list">
+            <li><strong>상호 부조 효과 (2~4인):</strong> 상호 부조를 통한 대피 지원 효과 발현.</li>
+            <li><strong>인솔 실패와 이탈 (5인 이상):</strong> 혼란 속 가족 집결 시도로 인한 탈출 지연.</li>
+            <li><strong>어린이 보호:</strong> 0~10세 유아 및 어린이 우선 구호 관측.</li>
+          </ul>
+        </div>
+
+        <div class="chart-box">
+          <div class="chart-box-header">
+            <span class="chart-box-title">동승 가족 수(FamilySize)별 생존율 변화</span>
+            <span class="chart-box-meta">LINE DISTRIBUTION</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="chartFamily"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+  <!-- ====================================================
+       SLIDE 7: PREDICTIVE INTELLIGENCE
+  ==================================================== -->
+  <section class="slide" data-slide="7">
+    <div class="slide-meta">
+      <span>06 / PREDICTIVE MODELING</span>
+      <span>MACHINE LEARNING PIPELINE</span>
+      <div class="meta-actions">
+        <button class="meta-btn" onclick="openGallery()">VIEW FIG 3</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="hero-kicker">Algorithmic Precision</div>
+      <h2 class="slide-title">생존 예측 모델 성능 벤치마크</h2>
+      <p class="slide-subtitle">3개 분류 알고리즘 비교를 통한 최적 추론 모델 도출.</p>
+
+      <div class="grid-2col">
+        <div class="chart-box">
+          <div class="chart-box-header">
+            <span class="chart-box-title">모델별 테스트셋 정확도(Accuracy) 및 ROC-AUC</span>
+            <span class="chart-box-meta">TEST DATA N=179</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="chartModels"></canvas>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; justify-content: center;">
+          <div class="editorial-card" style="margin-bottom: 1.2rem;">
+            <div class="card-num">CHAMPION MODEL</div>
+            <h3 class="card-title">Random Forest Classifier</h3>
+            <p class="card-desc">
+              100개 결정 트리 앙상블을 통한 비선형 관계 학습 및 과적합 억제.
+            </p>
+            <div class="card-stat">
+              <span class="stat-val" data-counter="83.24" data-suffix="%">83.24%</span>
+              <span class="stat-label">테스트 정확도 (ROC-AUC: 0.862)</span>
+            </div>
+          </div>
+
+          <ul class="editorial-list">
+            <li><strong>로지스틱 회귀 (82.12%):</strong> 선형 경계 기반 우수한 설명력 제공.</li>
+            <li><strong>의사결정나무 (80.45%):</strong> 직관적 규칙 기반 해석 가능성 입증.</li>
+            <li><strong>안정적 ROC-AUC (0.86+):</strong> 클래스 불균형 극복 및 높은 분별력 확보.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+  <!-- ====================================================
+       SLIDE 8: FEATURE IMPORTANCE
+  ==================================================== -->
+  <section class="slide" data-slide="8">
+    <div class="slide-meta">
+      <span>07 / FEATURE IMPORTANCE</span>
+      <span>GII ATTRIBUTION</span>
+      <div class="meta-actions">
+        <button class="meta-btn" onclick="openGallery()">VIEW FIG 3</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="grid-2col">
+        <div>
+          <div class="hero-kicker">Feature Attribution</div>
+          <h2 class="slide-title">의사결정 가중치 분석</h2>
+          <p class="slide-subtitle">머신러닝 알고리즘이 판단한 핵심 생존 결정 인자 순위.</p>
+
+          <div class="insight-callout">
+            <p>상위 3개 특성이 전체 생존 예측력의 57.6% 장악</p>
+            <span>DOMINANT FACTORS: SEX &bull; TITLE &bull; FARE</span>
+          </div>
+
+          <ul class="editorial-list">
+            <li><strong>Sex_male & Title_Mr (43.2%):</strong> 성별과 성인 남성 호칭의 가장 강력한 분기 노드 역할.</li>
+            <li><strong>LogFare & Pclass (25.0%):</strong> 경제적 지불 능력과 탑승 구역의 높은 기여도.</li>
+            <li><strong>Age (10.7%):</strong> 고령자 및 영유아 판별을 위한 지속적 수치 기여.</li>
+          </ul>
+        </div>
+
+        <div class="chart-box">
+          <div class="chart-box-header">
+            <span class="chart-box-title">랜덤 포레스트 특성 중요도 (Feature Importance)</span>
+            <span class="chart-box-meta">GINI IMPURITY REDUCTION</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="chartImportance"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+  <!-- ====================================================
+       SLIDE 9: SIMULATION & EPILOGUE
+  ==================================================== -->
+  <section class="slide" data-slide="9">
+    <div class="slide-meta">
+      <span>08 / SIMULATION & SYNTHESIS</span>
+      <span>PREDICTIVE INFERENCE</span>
+      <div class="meta-actions">
+        <button class="meta-btn" onclick="openToc()">INDEX</button>
+      </div>
+    </div>
+
+    <div class="slide-content">
+      <div class="hero-kicker">Inference Simulation</div>
+      <h2 class="slide-title">양극단의 시뮬레이션 및 최종 제언</h2>
+      <p class="slide-subtitle">알고리즘이 시뮬레이션한 가상 인물의 운명과 데이터가 남긴 사회적 함의.</p>
+
+      <div class="sim-panel">
+        <div class="sim-card survived">
+          <div class="sim-tag survived">SCENARIO A — HIGH SURVIVABILITY</div>
+          <div class="sim-rate" style="color: var(--accent-olive);" data-counter="97.7" data-suffix="%">97.7%</div>
+          <h4 style="font-family: var(--serif-body); font-size: 1.4rem; margin-bottom: 0.6rem;">1등석 25세 여성 (Miss / 운임 $100)</h4>
+          <p class="card-desc">
+            최상위 구명보트 접근권과 도덕적 우선 배려가 결합된 압도적 생존 확정군.
+          </p>
+        </div>
+
+        <div class="sim-card perished">
+          <div class="sim-tag perished">SCENARIO B — EXTREME VULNERABILITY</div>
+          <div class="sim-rate" style="color: var(--accent-terracotta);" data-counter="10.6" data-suffix="%">10.6%</div>
+          <h4 style="font-family: var(--serif-body); font-size: 1.4rem; margin-bottom: 0.6rem;">3등석 28세 남성 (Mr / 운임 $8)</h4>
+          <p class="card-desc">
+            가장 낮은 대피 우선순위와 구조적 소외가 중첩된 고위험 사망 취약군.
+          </p>
+        </div>
+      </div>
+
+      <div class="editorial-card" style="margin-top: 1.6rem; background: var(--bg-tint);">
+        <div class="card-num" style="margin-bottom: 0.4rem;">FINAL CONCLUSION & LESSON</div>
+        <div style="font-family: var(--serif-body); font-size: 1.3rem; line-height: 1.5; color: var(--text-main); font-weight: 600;">
+          "재난은 무작위적 우연이 아닌, 평시 사회 구조와 계층의 극단적 통계적 투영."
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </section>
+
+</div>
+
+<!-- Bottom Navigation Bar -->
+<footer class="deck-footer">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="deck-controls">
+    <button class="nav-btn" id="prevBtn" title="이전 슬라이드 (←)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      PREV
+    </button>
+    <button class="nav-btn" id="nextBtn" title="다음 슬라이드 (→)">
+      NEXT
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+    <div class="slide-counter">
+      <span class="curr" id="currSlideNum">01</span> / <span id="totalSlideNum">09</span>
+    </div>
+  </div>
+
+  <div class="deck-shortcuts">
+    <span>NAV:</span>
+    <span class="shortcut-key">←</span>
+    <span class="shortcut-key">→</span>
+    <span class="shortcut-key">SPACE</span>
+    <span style="margin-left: 0.6rem;">FULLSCREEN:</span>
+    <span class="shortcut-key">F</span>
+  </div>
+</footer>
+
+<!-- Table of Contents Drawer -->
+<div class="toc-drawer" id="tocDrawer">
+  <div>
+    <div class="toc-title">TABLE OF CONTENTS</div>
+    <ul class="toc-list" id="tocList">
+      <li class="toc-item current" onclick="goToSlide(1)"><span class="num">00</span> THE ANATOMY OF SURVIVAL</li>
+      <li class="toc-item" onclick="goToSlide(2)"><span class="num">01</span> EXECUTIVE SUMMARY</li>
+      <li class="toc-item" onclick="goToSlide(3)"><span class="num">02</span> DATA INTEGRITY AUDIT</li>
+      <li class="toc-item" onclick="goToSlide(4)"><span class="num">03</span> THE PRIMACY OF GENDER</li>
+      <li class="toc-item" onclick="goToSlide(5)"><span class="num">04</span> CLASS STRATIFICATION</li>
+      <li class="toc-item" onclick="goToSlide(6)"><span class="num">05</span> FAMILY DYNAMICS & AGE</li>
+      <li class="toc-item" onclick="goToSlide(7)"><span class="num">06</span> PREDICTIVE BENCHMARK</li>
+      <li class="toc-item" onclick="goToSlide(8)"><span class="num">07</span> FEATURE ATTRIBUTION</li>
+      <li class="toc-item" onclick="goToSlide(9)"><span class="num">08</span> SIMULATION & CONCLUSION</li>
+    </ul>
+  </div>
+  <button class="nav-btn" style="width: 100%; justify-content: center;" onclick="closeToc()">CLOSE INDEX</button>
+</div>
+
+<!-- Modal: Raw Python Analytics Figures -->
+<div class="modal-overlay" id="galleryModal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeGallery()">CLOSE &times;</button>
+    <h3 class="modal-title">PYTHON EDA & MODEL FIGURES</h3>
+    <p class="modal-subtitle">HIGH-RESOLUTION ARTIFACTS GENERATED VIA MATPLOTLIB & SEABORN</p>
+    
+    <div class="gallery-grid">
+      <div class="gallery-item">
+        <img src="week_03/eda_result.png" alt="무결성 검증 리포트" loading="lazy" />
+        <p>FIGURE 1. 데이터 무결성 검증 리포트 (결측치 히트맵, 비율, 중복값, IQR 이상치 박스플롯)</p>
+      </div>
+      <div class="gallery-item">
+        <img src="week_03/eda_survival_analysis.png" alt="생존 요인 분석" loading="lazy" />
+        <p>FIGURE 2. 탐색적 데이터 분석 (성별, 객실등급, 나이대, 동승가족수, 탑승항구별 생존율)</p>
+      </div>
+      <div class="gallery-item">
+        <img src="week_03/model_evaluation.png" alt="모델 성능 평가" loading="lazy" />
+        <p>FIGURE 3. 머신러닝 모델 성능 비교 (정확도, 혼동행렬, ROC 곡선, 랜덤포레스트 피처 중요도)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Slide Navigation Engine
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 1;
+  const currSlideNumEl = document.getElementById('currSlideNum');
+  const totalSlideNumEl = document.getElementById('totalSlideNum');
+  const progressBar = document.getElementById('progressBar');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const tocDrawer = document.getElementById('tocDrawer');
+  const galleryModal = document.getElementById('galleryModal');
+
+  totalSlideNumEl.textContent = totalSlides.toString().padStart(2, '0');
+
+  function updateSlide(newIndex) {
+    if (newIndex < 1 || newIndex > totalSlides) return;
+    
+    slides.forEach((s, idx) => {
+      s.classList.toggle('active', idx + 1 === newIndex);
+    });
+
+    currentSlide = newIndex;
+    currSlideNumEl.textContent = currentSlide.toString().padStart(2, '0');
+    progressBar.style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+    // Update TOC highlight
+    document.querySelectorAll('.toc-item').forEach((item, idx) => {
+      item.classList.toggle('current', idx + 1 === currentSlide);
+    });
+
+    // Trigger Chart Animations & Counters
+    triggerChartAnimations(currentSlide);
+    triggerCounters(slides[currentSlide - 1]);
+  }
+
+  function goToSlide(num) {
+    updateSlide(num);
+    closeToc();
+  }
+
+  prevBtn.addEventListener('click', () => updateSlide(currentSlide - 1));
+  nextBtn.addEventListener('click', () => updateSlide(currentSlide + 1));
+
+  // Keyboard navigation
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      updateSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      updateSlide(currentSlide - 1);
+    } else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    } else if (e.key === 'Escape') {
+      closeToc();
+      closeGallery();
+    }
+  });
+
+  // Touch Swipe for mobile/tablet
+  let touchStartX = 0;
+  window.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+  window.addEventListener('touchend', e => {
+    let diff = e.changedTouches[0].screenX - touchStartX;
+    if (diff < -50) updateSlide(currentSlide + 1);
+    if (diff > 50) updateSlide(currentSlide - 1);
+  }, {passive: true});
+
+  // TOC Drawer handlers
+  function openToc() { tocDrawer.classList.add('active'); }
+  function closeToc() { tocDrawer.classList.remove('active'); }
+  document.getElementById('openTocBtn').addEventListener('click', openToc);
+
+  // Gallery Modal handlers
+  function openGallery() { galleryModal.classList.add('active'); }
+  function closeGallery() { galleryModal.classList.remove('active'); }
+  document.getElementById('openGalleryBtn').addEventListener('click', openGallery);
+  galleryModal.addEventListener('click', (e) => {
+    if (e.target === galleryModal) closeGallery();
+  });
+
+  // Animated Counters
+  function triggerCounters(slideEl) {
+    const counters = slideEl.querySelectorAll('[data-counter]');
+    counters.forEach(c => {
+      const target = parseFloat(c.getAttribute('data-counter'));
+      const suffix = c.getAttribute('data-suffix') || '';
+      let start = 0;
+      const duration = 1200;
+      const startTime = performance.now();
+
+      function update(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const current = (start + (target - start) * ease).toFixed(target % 1 === 0 ? 0 : (target >= 10 ? 1 : 2));
+        c.textContent = current + suffix;
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    });
+  }
+
+  // ====================================================
+  // Chart.js Editorial Initializations & Animations
+  // ====================================================
+  const chartInstances = {};
+  Chart.defaults.font.family = "'Pretendard', sans-serif";
+  Chart.defaults.color = "#5C5A54";
+
+  // 1. Data Integrity Chart
+  function initChartIntegrity() {
+    const ctx = document.getElementById('chartIntegrity');
+    if (!ctx) return;
+    chartInstances.integrity = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Cabin (객실번호)', 'Age (나이)', 'Embarked (항구)', 'Duplicates (중복행)'],
+        datasets: [{
+          label: '결측 및 결함 비율 (%)',
+          data: [77.10, 19.87, 0.22, 0.0],
+          backgroundColor: ['#BA4836', '#C47B62', '#233544', '#39503B'],
+          barThickness: 26
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1300, easing: 'easeOutQuart' },
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true, max: 100,
+            grid: { color: 'rgba(20,20,19,0.06)' },
+            ticks: { callback: v => v + '%' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // 2. Gender Divide Chart
+  function initChartGender() {
+    const ctx = document.getElementById('chartGender');
+    if (!ctx) return;
+    chartInstances.gender = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['남성 (577명)', '여성 (314명)'],
+        datasets: [
+          { label: '사망 (Deceased)', data: [468, 81], backgroundColor: '#141413', barThickness: 45 },
+          { label: '생존 (Survived)', data: [109, 233], backgroundColor: '#BA4836', barThickness: 45 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1400, easing: 'easeOutQuart' },
+        plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(20,20,19,0.06)' } }
+        }
+      }
+    });
+  }
+
+  // 3. Class x Gender Matrix Chart
+  function initChartClassMatrix() {
+    const ctx = document.getElementById('chartClassMatrix');
+    if (!ctx) return;
+    chartInstances.classMatrix = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['1등석 (Upper)', '2등석 (Middle)', '3등석 (Lower)'],
+        datasets: [
+          { label: '여성 생존율 (%)', data: [96.8, 92.1, 50.0], backgroundColor: '#39503B', barPercentage: 0.7 },
+          { label: '남성 생존율 (%)', data: [36.9, 15.7, 13.5], backgroundColor: '#BA4836', barPercentage: 0.7 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1300, easing: 'easeOutQuart' },
+        plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } },
+        scales: {
+          y: {
+            beginAtZero: true, max: 100,
+            grid: { color: 'rgba(20,20,19,0.06)' },
+            ticks: { callback: v => v + '%' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // 4. Family Dynamics Chart
+  function initChartFamily() {
+    const ctx = document.getElementById('chartFamily');
+    if (!ctx) return;
+    chartInstances.family = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['1인 (나홀로)', '2인 가족', '3인 가족', '4인 가족', '5인 가족', '6인 가족', '7인 대가족'],
+        datasets: [{
+          label: '생존율 (%)',
+          data: [30.4, 55.3, 57.8, 72.4, 20.0, 13.6, 33.3],
+          borderColor: '#BA4836',
+          backgroundColor: 'rgba(186, 72, 54, 0.08)',
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointBackgroundColor: '#141413',
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1500, easing: 'easeOutQuart' },
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true, max: 100,
+            grid: { color: 'rgba(20,20,19,0.06)' },
+            ticks: { callback: v => v + '%' }
+          },
+          x: { grid: { color: 'rgba(20,20,19,0.03)' } }
+        }
+      }
+    });
+  }
+
+  // 5. Model Comparison Chart
+  function initChartModels() {
+    const ctx = document.getElementById('chartModels');
+    if (!ctx) return;
+    chartInstances.models = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['로지스틱 회귀', '의사결정나무', '랜덤 포레스트'],
+        datasets: [
+          { label: '테스트 정확도 (%)', data: [82.12, 80.45, 83.24], backgroundColor: '#233544', barThickness: 32 },
+          { label: 'ROC-AUC (x100)', data: [86.63, 84.65, 86.16], backgroundColor: '#BA4836', barThickness: 32 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1300, easing: 'easeOutQuart' },
+        plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } },
+        scales: {
+          y: { min: 65, max: 100, grid: { color: 'rgba(20,20,19,0.06)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // 6. Feature Importance Chart
+  function initChartImportance() {
+    const ctx = document.getElementById('chartImportance');
+    if (!ctx) return;
+    chartInstances.importance = new Chart(ctx, {
+      type: 'bar',
+      indexAxis: 'y',
+      data: {
+        labels: [
+          'Sex_male (남성 여부)',
+          'Title_Mr (성인 남성 호칭)',
+          'LogFare (로그 운임)',
+          'Age (나이)',
+          'Pclass (객실 등급)',
+          'FamilySize (가족 수)',
+          'Title_Miss (미혼 여성)'
+        ],
+        datasets: [{
+          label: '특성 중요도 (%)',
+          data: [25.2, 18.0, 14.4, 10.7, 10.6, 7.3, 4.8],
+          backgroundColor: '#141413',
+          hoverBackgroundColor: '#BA4836',
+          barThickness: 16
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1500, easing: 'easeOutQuart' },
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, max: 30, grid: { color: 'rgba(20,20,19,0.06)' }, ticks: { callback: v => v + '%' } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Trigger animations per slide
+  function triggerChartAnimations(slideIndex) {
+    if (slideIndex === 3) {
+      if (!chartInstances.integrity) initChartIntegrity();
+      else chartInstances.integrity.update();
+    }
+    if (slideIndex === 4) {
+      if (!chartInstances.gender) initChartGender();
+      else chartInstances.gender.update();
+    }
+    if (slideIndex === 5) {
+      if (!chartInstances.classMatrix) initChartClassMatrix();
+      else chartInstances.classMatrix.update();
+    }
+    if (slideIndex === 6) {
+      if (!chartInstances.family) initChartFamily();
+      else chartInstances.family.update();
+    }
+    if (slideIndex === 7) {
+      if (!chartInstances.models) initChartModels();
+      else chartInstances.models.update();
+    }
+    if (slideIndex === 8) {
+      if (!chartInstances.importance) initChartImportance();
+      else chartInstances.importance.update();
+    }
+  }
+</script>
+
+</body>
+</html>
