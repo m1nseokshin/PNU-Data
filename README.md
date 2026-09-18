@@ -17,10 +17,13 @@
 │   ├── eda_result.png           # 결측치/이상치 종합 검증 리포트 이미지
 │   ├── eda_survival_analysis.png# 특성별 생존율 분석 시각화 차트
 │   └── model_evaluation.png     # 모델 성능 및 피처 중요도 차트
-└── week_03_02/                  # 당뇨병(Pima Indians Diabetes) 데이터 분석
-    ├── pima-indians-diabetes.csv
-    ├── data_analysis_basics.py
-    └── data_analysis_basics.ipynb
+└── week_03_02/                  # 피마 인디언 당뇨병(Pima Indians Diabetes) 데이터 분석
+    ├── pima-indians-diabetes.csv    # 당뇨병 데이터셋 (768행 9열)
+    ├── data_analysis_basics.py      # 결측치, 중복값, 이상치 검증 스크립트
+    ├── data_analysis_basics.ipynb   # 주피터 노트북 실습 (사전 렌더링 완료)
+    ├── 01_missing_values_check.png  # 숨은 결측치(0값) 분석 차트
+    ├── 02_outliers_boxplot.png      # IQR 기준 이상치 박스플롯
+    └── 03_data_quality_summary.png  # 데이터 품질 종합 요약표
 ```
 
 ---
@@ -47,6 +50,23 @@
 
 - **가장 결정적인 피처 (Feature Importance):**  
   1위: `Sex_male`(성별), 2위: `Title_Mr`(성인 남성 호칭), 3위: `LogFare`(운임 요금), 4위: `Age`(나이)
+
+---
+
+## 🩺 Week 03-02: 피마 인디언 당뇨병 데이터 무결성 검증
+
+### 1. 결측치(Missing Values)의 함정
+- **표면상 NaN 결측치:** 0개
+- **도메인 지식 기반 "숨은 결측치":**
+  - 생리학적으로 0이 될 수 없는 수치(`Insulin` 48.7%, `SkinThickness` 29.6%, `BloodPressure` 4.6%, `BMI` 1.4%, `Glucose` 0.7%)가 0으로 대체 입력되어 있음을 확인
+  - 결측치 위치 히트맵 및 비율 차트 시각화 완료
+
+### 2. 중복값(Duplicates)
+- 총 768행 중 중복 수집된 행 0건 확인
+
+### 3. 이상치(Outliers) 검증 (IQR 방식)
+- 각 특성별 박스플롯(Boxplot) 시각화
+- `Insulin`(34건), `BloodPressure`(45건), `BMI`(19건), `Age`(9건) 등에서 사분위수 정상 범위를 벗어난 이상치 식별
 
 ---
 
